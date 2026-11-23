@@ -8,6 +8,12 @@ function e(?string $value): string
     return htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 }
 
+/* Email escapado que, se não couber, só parte a seguir ao @ (e não a meio do domínio). */
+function email_html(string $email): string
+{
+    return str_replace('@', '@<wbr>', e($email));
+}
+
 function asset(string $path): string
 {
     $file = dirname(__DIR__) . '/public_html/assets/' . $path;

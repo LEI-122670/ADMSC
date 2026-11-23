@@ -21,8 +21,8 @@ $current = static fn (string $key): string => $key === $active ? ' aria-current=
       <li class="menu__has-sub">
         <a href="/#modalidades"<?= $current('modalidades') ?>>Modalidades <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 3.5l3 3 3-3"/></svg></a>
         <div class="submenu">
-          <a href="/modalidades/kenpo">Kenpo</a>
-          <a href="/modalidades/ju-jitsu">Ju-Jitsu</a>
+          <a href="/#kenpo">Kenpo</a>
+          <a href="/#jujitsu">Ju-Jitsu</a>
         </div>
       </li>
       <?php foreach ($items as $key => [$href, $label]): ?>
@@ -48,8 +48,8 @@ $current = static fn (string $key): string => $key === $active ? ' aria-current=
           <div class="mobile-nav__links">
             <a href="/"<?= $current('inicio') ?>>Início</a>
             <span class="mobile-nav__group">Modalidades</span>
-            <a class="sub" href="/modalidades/kenpo">Kenpo</a>
-            <a class="sub" href="/modalidades/ju-jitsu">Ju-Jitsu</a>
+            <a class="sub" href="/#kenpo">Kenpo</a>
+            <a class="sub" href="/#jujitsu">Ju-Jitsu</a>
             <?php foreach ($items as $key => [$href, $label]): ?>
             <a href="<?= e($href) ?>"<?= $current($key) ?>><?= e($label) ?></a>
             <?php endforeach; ?>

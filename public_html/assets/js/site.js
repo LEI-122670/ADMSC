@@ -244,6 +244,51 @@
     });
   }
 
+  /* Sobre Nós: um único relógio para todas as fotos e valores, que trocam ao mesmo tempo.
+     Elementos com o mesmo data-rotator partilham o índice (ex.: o valor e a sua foto). */
+  function initRotators() {
+    var INTERVAL = 6000;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    var groups = {};
+    document.querySelectorAll('[data-rotator]').forEach(function (el) {
+      var slides = Array.prototype.slice.call(el.querySelectorAll('[data-slide]'));
+      if (slides.length < 2) return;
+      var name = el.getAttribute('data-rotator');
+      var group = groups[name] = groups[name] || { index: 0, size: 0, parts: [] };
+      group.size = Math.max(group.size, slides.length);
+      group.parts.push({ el: el, slides: slides });
+    });
+    var names = Object.keys(groups);
+    if (!names.length) return;
+
+    function show(group, next) {
+      group.parts.forEach(function (part) {
+        var len = part.slides.length, from = group.index % len, to = next % len;
+        part.slides.forEach(function (slide, i) {
+          slide.classList.toggle('is-leaving', i === from && from !== to);
+          slide.classList.toggle('is-active', i === to);
+        });
+      });
+      group.index = next;
+    }
+
+    names.forEach(function (name) {
+      var group = groups[name];
+      /* Textos com data-overlay passam para cima da foto do mesmo grupo (sem JS ficam em lista ao lado). */
+      group.parts.forEach(function (part) {
+        if (!part.el.hasAttribute('data-overlay')) return;
+        var media = group.parts.filter(function (other) { return other !== part; })[0];
+        if (!media) return;
+        media.el.appendChild(part.el);
+        part.el.classList.add('is-rotating');
+      });
+      show(group, 0);
+    });
+    setInterval(function () {
+      names.forEach(function (name) { var g = groups[name]; show(g, (g.index + 1) % g.size); });
+    }, INTERVAL);
+  }
+
   /* O cinto começa desapertado e aperta ao passar o rato. Sem rato (ou ecrã estreito), quando entra no ecrã. */
   function initBelt() {
     var belt = document.querySelector('[data-belt]');
@@ -273,4 +318,5 @@
   initMobileNav();
   initMap();
   initAcademy();
+  initRotators();
 })();

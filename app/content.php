@@ -44,6 +44,14 @@ return [
         ['Disciplina e Autocontrolo', 'Desenvolvimento da capacidade de concentração, resiliência e gestão emocional.'],
         ['Saúde e Bem-Estar', 'Promoção da condição física, equilíbrio mental e hábitos de vida saudáveis.'],
     ],
+    'atletas' => '110',
+    /* Fotos da secção Sobre Nós, em public_html/assets/img/ (ex.: 'sobre/historia-1.jpg').
+       null mostra um espaço reservado. Em 'valores', uma foto por valor, pela mesma ordem. */
+    'fotos_sobre' => [
+        'historia' => [null, null, null],
+        'valores' => [null, null, null],
+        'atletas' => [null, null, null],
+    ],
 
     'percurso' => [
         'Funções' => [

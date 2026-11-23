@@ -173,53 +173,84 @@ $hasHero = asset_exists('img/hero.jpg');
     </div>
   </section>
 
-  <section class="wrap-section about" id="sobre">
-    <div class="about__main">
+<?php
+  /* Uma foto do carrossel: a imagem, se existir, ou um espaço reservado. */
+  $slide = static function (?string $src, string $label, int $i): string {
+      $cls = 'about__slide' . ($i === 0 ? ' is-active' : '');
+      if ($src !== null && asset_exists('img/' . $src)) {
+          return '<img class="' . $cls . '" src="' . e(asset('img/' . $src)) . '" alt="' . e($label) . '" loading="lazy" decoding="async" data-slide>';
+      }
+      return '<div class="' . $cls . ' about__ph" data-slide><span>[FOTO ' . ($i + 1) . ' — ' . e($label) . ']</span></div>';
+  };
+  $fotos = $c['fotos_sobre'];
+?>
+  <section class="about" id="sobre">
+   <div class="about__in">
+    <div class="about__head">
       <h2 class="h2">Sobre Nós</h2>
-      <div class="stat"><span class="stat__n">110</span><span>atletas, aproximadamente</span></div>
-      <div class="about__block">
-        <h3>A Nossa História e Missão</h3>
+    </div>
+
+    <article class="about__row">
+      <div class="about__media" data-rotator="historia">
+        <?php foreach ($fotos['historia'] as $i => $src): ?><?= $slide($src, 'História e Missão', $i) ?><?php endforeach; ?>
+      </div>
+      <div class="about__text">
+        <h3 class="about__title">A Nossa História e Missão</h3>
         <?php foreach ($c['historia'] as $p): ?><p><?= e($p) ?></p><?php endforeach; ?>
       </div>
-      <div class="about__block">
-        <h3>A Nossa Visão e Valores</h3>
+    </article>
+
+    <article class="about__row">
+      <div class="about__media about__media--values" data-rotator="valores">
+        <?php foreach ($fotos['valores'] as $i => $src): ?><?= $slide($src, $c['valores'][$i][0] ?? 'Valores', $i) ?><?php endforeach; ?>
+      </div>
+      <div class="about__text">
+        <h3 class="about__title">A Nossa Visão e Valores</h3>
         <p><?= e($c['visao']) ?></p>
+        <div class="values" data-rotator="valores" data-overlay>
+          <?php foreach ($c['valores'] as $i => [$t, $d]): ?>
+          <div class="value<?= $i === 0 ? ' is-active' : '' ?>" data-slide>
+            <span class="num"><?= sprintf('%02d', $i + 1) ?></span>
+            <div><h4><?= e($t) ?></h4><p><?= e($d) ?></p></div>
+          </div>
+          <?php endforeach; ?>
+        </div>
       </div>
-    </div>
-    <div class="about__values">
-      <?php foreach ($c['valores'] as $i => [$t, $d]): ?>
-      <div class="numbered numbered--big">
-        <span class="num"><?= sprintf('%02d', $i + 1) ?></span>
-        <div><h3><?= e($t) ?></h3><p><?= e($d) ?></p></div>
+    </article>
+
+    <div class="about__count">
+      <div class="about__media about__media--band" data-rotator="atletas">
+        <?php foreach ($fotos['atletas'] as $i => $src): ?><?= $slide($src, 'Atletas', $i) ?><?php endforeach; ?>
       </div>
-      <?php endforeach; ?>
+      <div class="about__shade"></div>
+      <p class="about__stat">
+        <span>Cerca de</span>
+        <strong><?= e($c['atletas']) ?></strong>
+        <span>atletas de diversos escalões etários</span>
+      </p>
     </div>
+   </div>
   </section>
 
-  <section class="band band--pad" id="noticias">
-    <div class="wrap-stack">
-      <div class="section-head">
-        <h2 class="h2">Notícias</h2>
-        <a class="btn btn--line" href="/noticias">Ver todas</a>
-      </div>
-      <div class="news">
-        <div class="news__main">
-          <div class="ph ph--raised news__cover">[FOTO DA NOTÍCIA]</div>
-          <span class="meta">[DATA]</span>
-          <h3>[TÍTULO DA NOTÍCIA MAIS RECENTE]</h3>
-          <p>[A PREENCHER — resumo]</p>
-        </div>
-        <div class="news__side">
-          <?php for ($i = 0; $i < 2; $i++): ?>
-          <div class="news__thumb">
-            <div class="ph ph--raised">[FOTO]</div>
-            <div><span class="meta">[DATA]</span><strong>[TÍTULO DA NOTÍCIA]</strong></div>
+  <section class="news-strip" id="noticias">
+    <div class="news-strip__in">
+      <h2 class="h2">Notícias</h2>
+      <div class="news-strip__items" data-rotator="noticias">
+        <?php for ($i = 0; $i < 5; $i++): ?>
+        <a class="news-item<?= $i === 0 ? ' is-active' : '' ?>" href="/noticias" data-slide>
+          <div class="ph ph--raised news-item__img">[FOTO]</div>
+          <div class="news-item__text">
+            <span class="meta">[DATA]</span>
+            <h3>[TÍTULO DA NOTÍCIA <?= $i + 1 ?>]</h3>
           </div>
-          <?php endfor; ?>
-          <?php for ($i = 0; $i < 3; $i++): ?>
-          <div class="news__text"><span>[TÍTULO DA NOTÍCIA]</span><span class="meta">[DATA]</span></div>
-          <?php endfor; ?>
+        </a>
+        <?php endfor; ?>
+      </div>
+      <div class="news-strip__side">
+        <div class="news-strip__dots" data-rotator="noticias" aria-hidden="true">
+          <?php for ($i = 0; $i < 5; $i++): ?><span<?= $i === 0 ? ' class="is-active"' : '' ?> data-slide></span><?php endfor; ?>
         </div>
+        <a class="news-strip__all" href="/noticias">Ver todas</a>
       </div>
     </div>
   </section>
@@ -324,8 +355,8 @@ $hasHero = asset_exists('img/hero.jpg');
       <h2 class="h2">Venha treinar connosco</h2>
       <p class="lead"><?= e($c['venha_treinar']) ?></p>
       <div class="contact__data">
-        <div><strong>Morada</strong><span><?= e($c['morada1']) ?><br><?= e($c['morada2']) ?></span></div>
-        <div><strong>Email</strong><a class="wrap" href="mailto:<?= e($c['email']) ?>"><?= e($c['email']) ?></a></div>
+        <div><strong>Morada</strong><span><?= e($c['morada1']) ?><br><?= e($c['morada2']) ?></span><a class="contact__route" href="https://www.google.com/maps/dir/?api=1&amp;destination=<?= e(rawurlencode($address)) ?>" target="_blank" rel="noopener">Como chegar</a></div>
+        <div><strong>Email</strong><a class="email" href="mailto:<?= e($c['email']) ?>"><?= email_html($c['email']) ?></a></div>
         <div><strong>Telefone</strong><span><?= e($c['telefone']) ?></span></div>
         <div><strong>Redes sociais</strong><span class="social"><a href="<?= e($c['facebook']) ?>">Facebook</a><a href="<?= e($c['instagram']) ?>">Instagram</a></span></div>
       </div>
@@ -337,16 +368,10 @@ $hasHero = asset_exists('img/hero.jpg');
           <select name="modalidade" disabled><option>Kenpo</option><option>Ju-Jitsu</option><option>Ainda não sei</option></select>
         </label>
         <label class="fld span2">Mensagem<textarea name="mensagem" disabled></textarea></label>
-        <label class="consent span2"><input type="checkbox" name="consentimento" disabled>Aceito que a ADMSC use estes dados para me contactar, de acordo com a <a href="/privacidade">política de privacidade</a>.</label>
+        <label class="consent span2"><input type="checkbox" name="consentimento" disabled><span>Aceito que a ADMSC use estes dados para me contactar, de acordo com a <a href="/privacidade">política de privacidade</a>.</span></label>
         <button type="submit" class="btn btn--red span2" disabled>Enviar</button>
         <p class="form-note span2">O formulário estará disponível em breve. Entretanto, contacte-nos por email.</p>
       </form>
-    </div>
-    <div class="map" data-map data-address="<?= e($address) ?>">
-      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#B3201F" stroke-width="1.8" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>
-      <span><?= e($address) ?></span>
-      <a class="btn btn--line" data-map-load href="https://www.openstreetmap.org/search?query=<?= e(rawurlencode($address)) ?>">Mostrar mapa</a>
-      <small>O mapa é carregado a partir do Google Maps só depois de clicar.</small>
     </div>
   </section>
 </main>

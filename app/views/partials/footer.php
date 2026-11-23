@@ -14,7 +14,7 @@
       </div>
       <div class="site-footer__col">
         <strong>Contactos</strong>
-        <a class="wrap" href="mailto:<?= e($c['email']) ?>"><?= e($c['email']) ?></a>
+        <a class="email" href="mailto:<?= e($c['email']) ?>"><?= email_html($c['email']) ?></a>
         <span>Telefone <?= e($c['telefone']) ?></span>
         <div class="social">
           <a href="<?= e($c['facebook']) ?>">Facebook</a>
