@@ -318,5 +318,60 @@
   initMobileNav();
   initMap();
   initAcademy();
+
+  /* Calendário: muda de mês sem recarregar a página (sem JS, as setas recarregam). */
+  function initCalendar() {
+    var section = document.getElementById('calendario');
+    if (!section || !window.fetch || !window.DOMParser || !window.history.replaceState) return;
+    var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var busy = false;
+
+    section.addEventListener('click', function (event) {
+      var link = event.target.closest('[data-cal-dir]');
+      if (!link || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      event.preventDefault();
+      if (busy) return;
+      busy = true;
+      var url = link.href;
+      var dir = Number(link.getAttribute('data-cal-dir'));
+      var grid = section.querySelector('.cal');
+
+      var leaving = reduce ? Promise.resolve() : new Promise(function (resolve) {
+        grid.classList.add(dir > 0 ? 'cal--out-next' : 'cal--out-prev');
+        setTimeout(resolve, 180);
+      });
+
+      Promise.all([
+        fetch(url, { credentials: 'same-origin' }).then(function (r) {
+          if (!r.ok) throw new Error(r.status);
+          return r.text();
+        }),
+        leaving
+      ]).then(function (res) {
+        var doc = new DOMParser().parseFromString(res[0], 'text/html');
+        var nextGrid = doc.querySelector('#calendario .cal');
+        var nextNav = doc.querySelectorAll('#calendario [data-cal-dir]');
+        var nextLabel = doc.querySelector('#calendario .calendar__nav span');
+        if (!nextGrid || nextNav.length !== 2 || !nextLabel) throw new Error('markup');
+
+        grid.innerHTML = nextGrid.innerHTML;
+        section.querySelectorAll('[data-cal-dir]').forEach(function (a, i) { a.href = nextNav[i].getAttribute('href'); });
+        section.querySelector('.calendar__nav span').textContent = nextLabel.textContent;
+        history.replaceState(null, '', url);
+
+        if (!reduce) {
+          grid.classList.remove('cal--out-next', 'cal--out-prev');
+          grid.classList.add(dir > 0 ? 'cal--in-next' : 'cal--in-prev');
+          void grid.offsetWidth;
+          grid.classList.remove('cal--in-next', 'cal--in-prev');
+        }
+        busy = false;
+      }).catch(function () {
+        location.href = url;
+      });
+    });
+  }
+
   initRotators();
+  initCalendar();
 })();

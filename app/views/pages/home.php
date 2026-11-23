@@ -236,7 +236,19 @@ $hasHero = asset_exists('img/hero.jpg');
     <div class="news-strip__in">
       <h2 class="h2">Notícias</h2>
       <div class="news-strip__items" data-rotator="noticias">
-        <?php for ($i = 0; $i < 5; $i++): ?>
+        <?php if ($news): foreach ($news as $i => $n): ?>
+        <a class="news-item<?= $i === 0 ? ' is-active' : '' ?>" href="/noticias/<?= e($n['slug']) ?>" data-slide>
+          <?php if ($n['cover']): ?>
+          <img class="news-item__img" src="<?= e(upload_url($n['cover'])) ?>" alt="" loading="lazy">
+          <?php else: ?>
+          <div class="ph ph--raised news-item__img" aria-hidden="true">ADMSC</div>
+          <?php endif; ?>
+          <div class="news-item__text">
+            <time class="meta" datetime="<?= e(utc_to_local($n['published_at'])->format('Y-m-d')) ?>"><?= e(date_long(utc_to_local($n['published_at']))) ?></time>
+            <h3><?= e($n['title']) ?></h3>
+          </div>
+        </a>
+        <?php endforeach; else: for ($i = 0; $i < 5; $i++): ?>
         <a class="news-item<?= $i === 0 ? ' is-active' : '' ?>" href="/noticias" data-slide>
           <div class="ph ph--raised news-item__img">[FOTO]</div>
           <div class="news-item__text">
@@ -244,11 +256,11 @@ $hasHero = asset_exists('img/hero.jpg');
             <h3>[TÍTULO DA NOTÍCIA <?= $i + 1 ?>]</h3>
           </div>
         </a>
-        <?php endfor; ?>
+        <?php endfor; endif; ?>
       </div>
       <div class="news-strip__side">
         <div class="news-strip__dots" data-rotator="noticias" aria-hidden="true">
-          <?php for ($i = 0; $i < 5; $i++): ?><span<?= $i === 0 ? ' class="is-active"' : '' ?> data-slide></span><?php endfor; ?>
+          <?php for ($i = 0, $dots = $news ? count($news) : 5; $i < $dots; $i++): ?><span<?= $i === 0 ? ' class="is-active"' : '' ?> data-slide></span><?php endfor; ?>
         </div>
         <a class="news-strip__all" href="/noticias">Ver todas</a>
       </div>
@@ -260,16 +272,21 @@ $hasHero = asset_exists('img/hero.jpg');
       <div class="section-head">
         <h2 class="h2">Calendário</h2>
         <div class="calendar__nav">
-          <a href="/?mes=<?= e($calendar['prev']) ?>#calendario" rel="nofollow" aria-label="Mês anterior"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></a>
-          <span><?= e($calendar['label']) ?></span>
-          <a href="/?mes=<?= e($calendar['next']) ?>#calendario" rel="nofollow" aria-label="Mês seguinte"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>
+          <a href="/?mes=<?= e($calendar['prev']) ?>#calendario" rel="nofollow" aria-label="Mês anterior" data-cal-dir="-1"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></a>
+          <span aria-live="polite"><?= e($calendar['label']) ?></span>
+          <a href="/?mes=<?= e($calendar['next']) ?>#calendario" rel="nofollow" aria-label="Mês seguinte" data-cal-dir="1"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>
         </div>
       </div>
       <div class="cal">
         <?php foreach ($weekdays as $w): ?><span class="cal__wd"><?= $w ?></span><?php endforeach; ?>
         <?php foreach ($calendar['cells'] as $cell): ?>
-        <div class="cal__cell<?= $cell['day'] === null ? ' cal__cell--out' : '' ?>">
+        <div class="cal__cell<?= $cell['day'] === null ? ' cal__cell--out' : '' ?><?= $cell['events'] ? ' cal__cell--event' : '' ?>">
           <?php if ($cell['day'] !== null): ?><span class="cal__n<?= $cell['today'] ? ' cal__n--today' : '' ?>"<?= $cell['today'] ? ' aria-current="date"' : '' ?>><?= $cell['day'] ?></span><?php endif; ?>
+          <?php if ($cell['events']): ?>
+          <ul class="cal__events">
+            <?php foreach ($cell['events'] as $ev): ?><li><?= e($ev['title']) ?></li><?php endforeach; ?>
+          </ul>
+          <?php endif; ?>
         </div>
         <?php endforeach; ?>
       </div>
@@ -280,7 +297,20 @@ $hasHero = asset_exists('img/hero.jpg');
     </div>
     <div class="calendar__side">
       <h3>Próximos eventos</h3>
+      <?php if ($upcoming): ?>
+      <ul class="upcoming">
+        <?php foreach ($upcoming as $ev): ?>
+        <li>
+          <time class="meta" datetime="<?= e($ev['starts_on']) ?>"><?= e(event_when($ev)) ?></time>
+          <strong><?= e($ev['title']) ?></strong>
+          <?php if ($ev['location']): ?><span><?= e($ev['location']) ?></span><?php endif; ?>
+          <?php if ($ev['description']): ?><p><?= e(excerpt($ev['description'], 160)) ?></p><?php endif; ?>
+        </li>
+        <?php endforeach; ?>
+      </ul>
+      <?php else: ?>
       <p class="empty">Sem eventos agendados.</p>
+      <?php endif; ?>
     </div>
   </section>
 

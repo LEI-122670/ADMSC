@@ -6,4 +6,6 @@ if (PHP_SAPI === 'cli-server' && is_file(__DIR__ . parse_url($_SERVER['REQUEST_U
 }
 
 require dirname(__DIR__) . '/app/helpers.php';
+require dirname(__DIR__) . '/app/db.php';
+require dirname(__DIR__) . '/app/repo.php';
 require dirname(__DIR__) . '/app/routes.php';

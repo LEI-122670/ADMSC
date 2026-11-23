@@ -4,9 +4,13 @@ declare(strict_types=1);
 $content_data = require __DIR__ . '/content.php';
 $path = '/' . trim((string) parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH), '/');
 
+if ($path === '/admin' || str_starts_with($path, '/admin/')) {
+    require __DIR__ . '/admin/routes.php';
+    return;
+}
+
 $stubs = [
     '/loja' => ['Loja', 'loja'],
-    '/noticias' => ['Notícias', 'none'],
     '/carrinho' => ['Carrinho', 'loja'],
     '/checkout' => ['Checkout', 'loja'],
     '/login' => ['Login', 'none'],
@@ -28,7 +32,9 @@ if ($path === '/') {
         'header' => 'overlay',
         'active' => 'inicio',
         'portal' => true,
-        'calendar' => calendar_month($_GET['mes'] ?? null),
+        'calendar' => calendar_month($_GET['mes'] ?? null, static fn (string $from, string $to): array => try_db(static fn () => events_by_day($from, $to), [])),
+        'upcoming' => try_db(static fn () => upcoming_events(5), []),
+        'news' => try_db(static fn () => published_news(5), []),
     ]);
 } elseif (isset($content_data['modalidades'][$path])) {
     $m = $content_data['modalidades'][$path];
@@ -37,6 +43,25 @@ if ($path === '/') {
         'title' => $m['nome'] . ' — ADMSC',
         'description' => $m['resumo'],
         'active' => 'modalidades',
+    ]);
+} elseif ($path === '/noticias') {
+    $perPage = 12;
+    $page = max(1, (int) ($_GET['pagina'] ?? 1));
+    $total = try_db(static fn () => published_news_count(), 0);
+    render('news', $base + [
+        'title' => 'Notícias — ADMSC',
+        'description' => 'Notícias da Associação Desportiva Marcial Samora Correia.',
+        'active' => 'none',
+        'news' => try_db(static fn () => published_news($perPage, ($page - 1) * $perPage), []),
+        'page' => $page,
+        'pages' => max(1, (int) ceil($total / $perPage)),
+    ]);
+} elseif (preg_match('#^/noticias/([a-z0-9-]+)$#', $path, $m) === 1 && ($article = try_db(static fn () => published_news_by_slug($m[1]), null)) !== null) {
+    render('news-article', $base + [
+        'title' => $article['title'] . ' — ADMSC',
+        'description' => excerpt($article['body'], 155),
+        'active' => 'none',
+        'article' => $article,
     ]);
 } elseif ($path === '/associacao') {
     render('simple', $base + [

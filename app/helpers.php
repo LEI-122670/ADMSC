@@ -46,9 +46,9 @@ function render(string $page, array $data = [], int $status = 200): void
 /**
  * Builds a Monday-first month grid.
  *
- * @param array<string, mixed> $events events keyed by Y-m-d
+ * @param (callable(string, string): array)|null $loadEvents recebe o 1.º e o último dia do mês; devolve eventos por dia (Y-m-d)
  */
-function calendar_month(?string $requested, array $events = []): array
+function calendar_month(?string $requested, ?callable $loadEvents = null): array
 {
     $months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
     $today = new DateTimeImmutable('today');
@@ -57,6 +57,7 @@ function calendar_month(?string $requested, array $events = []): array
 
     $offset = (int) $first->format('N') - 1;
     $days = (int) $first->format('t');
+    $events = $loadEvents ? $loadEvents($first->format('Y-m-d'), $first->format('Y-m-t')) : [];
     $total = (int) ceil(($offset + $days) / 7) * 7;
 
     $cells = [];
@@ -67,7 +68,7 @@ function calendar_month(?string $requested, array $events = []): array
         $cells[] = [
             'day' => $inMonth ? $day : null,
             'today' => $date === $today->format('Y-m-d'),
-            'event' => $date !== null ? ($events[$date] ?? null) : null,
+            'events' => $date !== null ? ($events[$date] ?? []) : [],
         ];
     }
 
@@ -77,4 +78,78 @@ function calendar_month(?string $requested, array $events = []): array
         'next' => $first->modify('+1 month')->format('Y-m'),
         'cells' => $cells,
     ];
+}
+
+function redirect(string $url, int $status = 303): never
+{
+    header('Location: ' . $url, true, $status);
+    exit;
+}
+
+/** Texto para endereço: "Estágio de Verão 2026" → "estagio-de-verao-2026". */
+function slugify(string $text): string
+{
+    $text = mb_strtolower($text, 'UTF-8');
+    $text = strtr($text, [
+        'á' => 'a', 'à' => 'a', 'â' => 'a', 'ã' => 'a', 'ä' => 'a', 'ç' => 'c',
+        'é' => 'e', 'è' => 'e', 'ê' => 'e', 'ë' => 'e', 'í' => 'i', 'ì' => 'i', 'î' => 'i', 'ï' => 'i',
+        'ó' => 'o', 'ò' => 'o', 'ô' => 'o', 'õ' => 'o', 'ö' => 'o', 'ú' => 'u', 'ù' => 'u', 'û' => 'u', 'ü' => 'u',
+        'ñ' => 'n', 'º' => 'o', 'ª' => 'a',
+    ]);
+    $text = trim((string) preg_replace('/[^a-z0-9]+/', '-', $text), '-');
+    return substr($text, 0, 120) ?: 'item';
+}
+
+/** "12,50" / "12.5" / "12 €" → 1250 cêntimos; null se inválido. */
+function parse_money(string $value): ?int
+{
+    $value = str_replace(['€', ' ', "\u{a0}"], '', trim($value));
+    if (preg_match('/^(\d{1,6})(?:[.,](\d{1,2}))?$/', $value, $m) !== 1) {
+        return null;
+    }
+    return (int) $m[1] * 100 + (int) str_pad($m[2] ?? '0', 2, '0');
+}
+
+/** 1250 → "12,50 €" */
+function money(int $cents): string
+{
+    return number_format($cents / 100, 2, ',', ' ') . ' €';
+}
+
+/** 1250 → "12,50" (para campos de formulário). */
+function money_input(?int $cents): string
+{
+    return $cents === null ? '' : number_format($cents / 100, 2, ',', '');
+}
+
+const MONTHS_PT = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+
+/** Data UTC da base de dados → hora de Portugal. */
+function utc_to_local(string $utc): DateTimeImmutable
+{
+    return (new DateTimeImmutable($utc, new DateTimeZone('UTC')))->setTimezone(new DateTimeZone('Europe/Lisbon'));
+}
+
+/** "23 de novembro de 2026" */
+function date_long(DateTimeInterface $date): string
+{
+    return $date->format('j') . ' de ' . MONTHS_PT[(int) $date->format('n') - 1] . ' de ' . $date->format('Y');
+}
+
+/** Parágrafos a partir de texto simples (linhas em branco separam parágrafos). */
+function paragraphs(string $text): string
+{
+    $html = '';
+    foreach (preg_split('/\R{2,}/', trim($text)) ?: [] as $block) {
+        if (trim($block) !== '') {
+            $html .= '<p>' . nl2br(e(trim($block)), false) . '</p>';
+        }
+    }
+    return $html;
+}
+
+/** Endereço público de um ficheiro em public_html/uploads/. */
+function upload_url(string $relative): string
+{
+    return '/uploads/' . $relative;
 }
